@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { tmdb } from '@/lib/tmdb';
 import { revalidatePath } from 'next/cache';
+import { after } from 'next/server';
 
 export type CsvMovieImport = {
     imdb_id: string; // Const
@@ -103,8 +104,11 @@ export async function processImport(movies: CsvMovieImport[], filename: string):
         }
     }
 
-    // Disparar worker tras insertar
-    triggerWorker(user.id);
+    // Disparar worker tras insertar.
+    // IMPORTANTE: usamos after() para que el fetch se ejecute DESPUÉS de enviar la
+    // respuesta sin que Vercel congele la función. Un fetch "fire & forget" sin await
+    // nunca llega a ejecutarse en serverless (la instancia se termina al responder).
+    after(() => triggerWorker());
 
     revalidatePath('/app/library');
 
@@ -116,27 +120,25 @@ export async function processImport(movies: CsvMovieImport[], filename: string):
         errors: errorCount
     };
 }
-// Helper para activar los workers de fondo
-function triggerWorker(userId: string) {
+// Helper para activar los workers de fondo.
+// Se invoca dentro de after(), así que SÍ esperamos (await) la respuesta: el worker
+// procesa por lotes con su propio presupuesto de tiempo y se re-dispara solo si quedan
+// items. Aunque after() se corte por maxDuration, la invocación del worker ya está en
+// marcha de forma independiente y continúa drenando la cola.
+async function triggerWorker() {
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
     const workerUrl = `${appUrl}/api/workers/process-import`;
 
     try {
-        fetch(workerUrl, {
+        await fetch(workerUrl, {
             method: 'POST',
             headers: {
                 'x-cron-secret': process.env.CRON_SECRET || '',
                 'Content-Type': 'application/json'
-            },
-            signal: AbortSignal.timeout(500)
-        }).catch(err => {
-            if (err.name !== 'TimeoutError') {
-                console.error("Fallo al activar worker:", err);
             }
         });
-
-    } catch (e) {
-        // Catch silencioso
+    } catch (err) {
+        console.error("Fallo al activar worker:", err);
     }
 }
 
