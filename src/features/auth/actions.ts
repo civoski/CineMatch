@@ -11,8 +11,8 @@ export async function signup(formData: FormData) {
     const password = formData.get('password') as string
     const full_name = formData.get('full_name') as string
 
-    // Configuramos la URL de redirección para que apunte a nuestro endpoint de intercambio de código
-    const emailRedirectTo = `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`
+    // Redirección al endpoint que valida el token_hash con verifyOtp (flujo stateless)
+    const emailRedirectTo = `${process.env.NEXT_PUBLIC_SITE_URL}/auth/confirm?next=/app`
 
     const { data, error } = await supabase.auth.signUp({
         email,
@@ -45,7 +45,7 @@ export async function signup(formData: FormData) {
 export async function resetPassword(formData: FormData) {
     const supabase = await createClient()
     const email = formData.get('email') as string
-    const redirectTo = `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback?next=/auth/update-password`
+    const redirectTo = `${process.env.NEXT_PUBLIC_SITE_URL}/auth/confirm?next=/auth/update-password`
 
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo,
