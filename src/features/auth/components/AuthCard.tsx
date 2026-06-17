@@ -2,10 +2,12 @@
 
 import * as React from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Mail, Lock, User, ArrowLeft, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { login, signup, resetPassword } from "../actions";
+import { signup, resetPassword } from "../actions";
+import { createClient } from "@/lib/supabase/client";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -25,6 +27,7 @@ import { AuthSkeleton } from "./AuthSkeleton";
 type AuthView = "login" | "register" | "forgot-password";
 
 export function AuthCard() {
+  const router = useRouter();
   const [view, setView] = React.useState<AuthView>("login");
   const [isLoading, setIsLoading] = React.useState(false);
   const [acceptedTerms, setAcceptedTerms] = React.useState(false);
@@ -42,9 +45,25 @@ export function AuthCard() {
     const formData = new FormData(e.currentTarget);
 
     try {
+      if (view === "login") {
+        // Login en el cliente: dispara onAuthStateChange al instante,
+        // de modo que el header (AuthProvider) refleja la sesión sin retraso.
+        const supabase = createClient();
+        const { error } = await supabase.auth.signInWithPassword({
+          email: formData.get("email") as string,
+          password: formData.get("password") as string,
+        });
+        if (error) {
+          toast.error("Credenciales inválidas");
+          return;
+        }
+        router.refresh();
+        router.push("/app");
+        return;
+      }
+
       let result;
-      if (view === "login") result = await login(formData);
-      else if (view === "register") {
+      if (view === "register") {
         if (formData.get("password") !== formData.get("confirm_password")) {
           toast.error("Las contraseñas no coinciden");
           return;
