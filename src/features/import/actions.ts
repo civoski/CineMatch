@@ -193,7 +193,8 @@ export async function deleteImport(importId: string) {
 
         if (orphanedMovieIds.length > 0) {
             // Eliminar huérfanos de Watchlist
-            await supabase.from('watchlists').delete().in('movie_id', orphanedMovieIds).eq('user_id', user.id);
+            const { error: deleteWatchlistError } = await supabase.from('watchlists').delete().in('movie_id', orphanedMovieIds).eq('user_id', user.id);
+            if (deleteWatchlistError) throw new Error(`Error deleting watchlists: ${deleteWatchlistError.message}`);
         }
     }
 

@@ -105,7 +105,8 @@ export async function getMovie(id: string): Promise<MovieDetail | null> {
                     if (existing) {
                         movieId = existing.id;
                         // Actualizar si falta tmdb_id
-                        await supabase.from('movies').update({ ...payload, tmdb_id: tmdbMovie.id }).eq('id', movieId);
+                        const { error: updateError } = await supabase.from('movies').update({ ...payload, tmdb_id: tmdbMovie.id }).eq('id', movieId);
+                        if (updateError) console.error(`Error updating movie ${movieId}:`, updateError);
                     } else {
                         const { data: newEntry, error: insertError } = await supabase
                             .from('movies')

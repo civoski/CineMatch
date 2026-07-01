@@ -65,21 +65,23 @@ export async function POST(request: NextRequest) {
             const results = await Promise.allSettled(queueItems.map(async (item) => {
                 const payload = item.payload;
                 // Marcar como procesando
-                await supabase.from('import_queue')
+                const { error: updateQueueError } = await supabase.from('import_queue')
                     .update({ status: 'processing', updated_at: new Date().toISOString() })
                     .eq('id', item.id);
+                if (updateQueueError) throw new Error(`Failed to mark queue item as processing: ${updateQueueError.message}`);
 
                 try {
                     await processQueueItem(supabase, item.user_id, item.payload);
-                    // Eliminar de la cola si es exitoso para evitar re-procesamiento
-                    await supabase.from('import_queue').delete().eq('id', item.id);
+                    const { error: deleteError } = await supabase.from('import_queue').delete().eq('id', item.id);
+                    if (deleteError) throw new Error(`Failed to delete queue item: ${deleteError.message}`);
                     return item.id;
                 } catch (err: any) {
                     console.error(`Item failed ${item.id}:`, err);
                     // Marcar como fallido para reintento o inspección
-                    await supabase.from('import_queue')
+                    const { error: updateError } = await supabase.from('import_queue')
                         .update({ status: 'failed', error_message: err.message || 'Error', updated_at: new Date().toISOString() })
                         .eq('id', item.id);
+                    if (updateError) console.error(`Failed to mark queue item as failed: ${updateError.message}`);
                     throw err;
                 }
             }));
@@ -189,7 +191,8 @@ async function processQueueItem(supabase: any, userId: string, movie: any) {
     };
     if (movie.user_rating) watchlistData.user_rating = movie.user_rating;
 
-    await supabase.from('watchlists').upsert(watchlistData, { onConflict: 'user_id, movie_id' });
+    const { error: watchlistError } = await supabase.from('watchlists').upsert(watchlistData, { onConflict: 'user_id, movie_id' });
+    if (watchlistError) throw new Error(`Watchlist Save Error: ${watchlistError.message}`);
 
     // 4. Enriquecimiento de datos
     // Optimización: Si ya tenemos extended_data, runtime y fotos, evitamos llamar a TMDB.
@@ -271,7 +274,7 @@ async function enrichMovieData(supabase: any, movieId: string, imdbId: string) {
             recommendations: []
         };
 
-        await supabase.from('movies').update({
+        const { error } = await supabase.from('movies').update({
             title: details.title, // Force update title from TMDB for consistency
             year: details.release_date ? parseInt(details.release_date.split('-')[0]) : undefined,
             extended_data: extendedData,
@@ -280,10 +283,12 @@ async function enrichMovieData(supabase: any, movieId: string, imdbId: string) {
             synopsis: details.overview,
             director: extendedData.crew.director,
             genres: extendedData.technical.genres,
-            tmdb_id: details.id,
-            collection_id: collectionId,
-            collection_name: collectionName,
+            tmdb_id: details.id
         }).eq('id', movieId);
+
+        if (error) {
+            console.error(`Error updating movie ${movieId} with TMDB data:`, error);
+        }
     }
 }
 

@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import Image from "@/components/CloudinaryImage";
+import Link from "next/link";
 
 interface AccordionMovieCardProps {
   id: string;
@@ -14,6 +15,7 @@ interface AccordionMovieCardProps {
 }
 
 export function AccordionMovieCard({
+  id,
   title,
   year,
   posterUrl,
@@ -22,7 +24,7 @@ export function AccordionMovieCard({
   userRating,
 }: AccordionMovieCardProps) {
   return (
-    <div className="group relative flex flex-col">
+    <Link href={`/app/movies/${id}`} className="group relative flex flex-col block">
       <div className="relative aspect-[2/3] overflow-hidden rounded-lg bg-card/20 backdrop-blur-xl ring-1 ring-border/40 border-0 shadow-md shadow-black/10 transition-all duration-300 hover:bg-card/30 hover:ring-primary/30 hover:shadow-lg hover:shadow-black/15">
         {posterUrl ? (
           <motion.div
@@ -59,6 +61,6 @@ export function AccordionMovieCard({
           <p className="text-xs text-muted-foreground/70">{director}</p>
         )}
       </div>
-    </div>
+    </Link>
   );
 }
