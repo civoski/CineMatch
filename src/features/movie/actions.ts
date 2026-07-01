@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { createClient as createAdminClient } from '@supabase/supabase-js';
 import { syncMoviePeople } from '@/features/rankings/people-sync';
+import { resolveTmdbConflict, findOrCreateMovieId } from '@/features/movie/tmdb-conflict';
 import { mapTmdbMovieToPayload, type MoviePayload } from '@/lib/tmdb/mappers';
 export type MovieDetail = {
     id: string;
@@ -93,29 +94,25 @@ export async function getMovie(id: string): Promise<MovieDetail | null> {
                         }
                     }
 
-                    // Verificar si ya existe por IMDB ID
-                    const { data: existing } = await supabase
-                        .from('movies')
-                        .select('id, extended_data')
-                        .eq('imdb_id', tmdbMovie.imdb_id)
-                        .maybeSingle();
-
                     const payload = mapTmdbMovieToPayload(tmdbMovie, validRecommendations);
 
-                    if (existing) {
-                        movieId = existing.id;
-                        // Actualizar si falta tmdb_id
-                        const { error: updateError } = await supabase.from('movies').update({ ...payload, tmdb_id: tmdbMovie.id }).eq('id', movieId);
-                        if (updateError) console.error(`Error updating movie ${movieId}:`, updateError);
-                    } else {
-                        const { data: newEntry, error: insertError } = await supabase
-                            .from('movies')
-                            .insert(payload)
-                            .select('id')
-                            .single();
+                    // Punto único de creación: deduplica por imdb_id Y tmdb_id (y fusiona
+                    // filas gemelas si existieran), en vez de insertar a ciegas.
+                    const { id: resolvedId, created } = await findOrCreateMovieId(supabase, {
+                        imdbId: tmdbMovie.imdb_id,
+                        tmdbId: tmdbMovie.id,
+                        insertPayload: payload,
+                    });
 
-                        if (!insertError && newEntry) {
-                            movieId = newEntry.id;
+                    if (resolvedId) {
+                        movieId = resolvedId;
+                        // Si reutilizamos una fila existente, la refrescamos con los datos de TMDB.
+                        if (!created) {
+                            const { error: updateError } = await supabase
+                                .from('movies')
+                                .update({ ...payload, tmdb_id: tmdbMovie.id })
+                                .eq('id', movieId);
+                            if (updateError) console.error(`Error updating movie ${movieId}:`, updateError);
                         }
                     }
 
@@ -185,6 +182,11 @@ export async function getMovie(id: string): Promise<MovieDetail | null> {
                 }
 
                 const payload = mapTmdbMovieToPayload(tmdbMovie, validRecommendations);
+
+                // Si otra fila gemela (huérfana) ya posee este tmdb_id, la fusionamos
+                // en esta película para liberar el índice UNIQUE antes de actualizar.
+                // Sin esto el UPDATE falla con 23505 y la película nunca obtiene póster.
+                await resolveTmdbConflict(supabase, movie.id, tmdbMovie.id);
 
                 // TRANSACCIÓN: Actualizar película primero
                 const { error: updateError } = await supabase

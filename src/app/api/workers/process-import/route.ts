@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 import { tmdb, TmdbClient } from '@/lib/tmdb';
 import { NextRequest, NextResponse } from 'next/server';
 import { syncMoviePeople } from '@/features/rankings/people-sync'; // Lógica compartida para sincronizar People
+import { resolveTmdbConflict } from '@/features/movie/tmdb-conflict';
 
 // Tiempo máximo de ejecución por lote (limitado por Vercel)
 export const maxDuration = 60;
@@ -226,6 +227,11 @@ async function enrichMovieData(supabase: any, movieId: string, imdbId: string) {
     const details = await tmdb.findByImdbId(imdbId);
 
     if (details) {
+        // Resolvemos colisión de tmdb_id ANTES de escribir: si otra fila (huérfana,
+        // creada al navegar) ya posee este tmdb_id, la fusionamos en esta película.
+        // Sin esto, el UPDATE de abajo falla con 23505 y la película queda sin póster.
+        await resolveTmdbConflict(supabase, movieId, details.id);
+
         // Sync people to relational tables
         if (details.credits) {
             await syncMoviePeople(supabase, movieId, details.credits);

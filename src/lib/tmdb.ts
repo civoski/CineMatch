@@ -228,18 +228,78 @@ export class TmdbClient {
      */
     async findByImdbId(imdbId: string): Promise<TmdbMovieDetails | null> {
         // 1. Buscar el ID de TMDb usando el ID de IMDb
-        const findRes = await this.fetch<{ movie_results: Array<{ id: number }> }>(`/find/${imdbId}`, {
+        const findRes = await this.fetch<{
+            movie_results: Array<{ id: number }>;
+            tv_results: Array<{ id: number }>;
+        }>(`/find/${imdbId}`, {
             external_source: 'imdb_id'
         });
 
-        if (!findRes || !findRes.movie_results?.[0]) {
-            return null;
+        if (!findRes) return null;
+
+        // 2. Caso normal: película
+        if (findRes.movie_results?.[0]) {
+            return this.getMovieDetails(findRes.movie_results[0].id);
         }
 
-        const tmdbId = findRes.movie_results[0].id;
+        // 3. Fallback: los watchlists de IMDb incluyen series de TV. TMDB las devuelve
+        // en `tv_results` (no en `movie_results`), por lo que antes se ignoraban y
+        // quedaban sin póster para siempre. Las normalizamos al shape de película.
+        if (findRes.tv_results?.[0]) {
+            return this.getTvAsMovieDetails(findRes.tv_results[0].id, imdbId);
+        }
 
-        // 2. Obtener la ficha completa enriquecida
-        return this.getMovieDetails(tmdbId);
+        return null;
+    }
+
+    /**
+     * Obtiene una serie de TV y la normaliza al shape de `TmdbMovieDetails`, para que
+     * las series presentes en watchlists de IMDb obtengan póster, sinopsis y cast
+     * reutilizando toda la lógica de enriquecimiento (originalmente pensada para películas).
+     */
+    async getTvAsMovieDetails(tvId: number, imdbId: string | null = null): Promise<TmdbMovieDetails | null> {
+        const tv = await this.fetch<any>(`/tv/${tvId}`, {
+            append_to_response: 'credits,videos,content_ratings,images,recommendations,external_ids',
+            include_image_language: 'null'
+        });
+
+        if (!tv) return null;
+
+        return {
+            id: tv.id,
+            imdb_id: imdbId ?? tv.external_ids?.imdb_id ?? null,
+            title: tv.name,
+            original_title: tv.original_name,
+            poster_path: tv.poster_path ?? null,
+            backdrop_path: tv.backdrop_path ?? null,
+            release_date: tv.first_air_date || '',
+            runtime: Array.isArray(tv.episode_run_time) && tv.episode_run_time.length > 0
+                ? tv.episode_run_time[0]
+                : null,
+            budget: 0,
+            revenue: 0,
+            vote_average: tv.vote_average ?? 0,
+            vote_count: tv.vote_count ?? 0,
+            overview: tv.overview ?? null,
+            tagline: tv.tagline ?? null,
+            genres: tv.genres ?? [],
+            production_companies: tv.production_companies ?? [],
+            spoken_languages: tv.spoken_languages ?? [],
+            credits: {
+                cast: tv.credits?.cast ?? [],
+                crew: tv.credits?.crew ?? []
+            },
+            videos: { results: tv.videos?.results ?? [] },
+            // TV usa `content_ratings` en vez de `release_dates`; lo dejamos vacío para
+            // que la búsqueda de certificación devuelva undefined sin romper.
+            release_dates: { results: [] },
+            images: {
+                posters: tv.images?.posters ?? [],
+                backdrops: tv.images?.backdrops ?? []
+            },
+            belongs_to_collection: null,
+            recommendations: tv.recommendations ?? undefined
+        } as TmdbMovieDetails;
     }
 
     /**

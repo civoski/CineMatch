@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 import { tmdb, TmdbClient } from '@/lib/tmdb';
 import { NextRequest, NextResponse } from 'next/server';
 import { syncMoviePeople } from '@/features/rankings/people-sync';
+import { resolveTmdbConflict } from '@/features/movie/tmdb-conflict';
 
 export const maxDuration = 60;
 export const dynamic = 'force-dynamic';
@@ -55,6 +56,9 @@ export async function POST(request: NextRequest) {
                 const details = await tmdb.findByImdbId(movie.imdb_id);
 
                 if (details) {
+                    // Libera el tmdb_id si una fila gemela huérfana lo posee (evita 23505).
+                    await resolveTmdbConflict(supabase, movie.id, details.id);
+
                     if (details.credits) {
                         await syncMoviePeople(supabase, movie.id, details.credits);
                     }
