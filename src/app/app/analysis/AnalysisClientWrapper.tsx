@@ -2,16 +2,21 @@
 
 import * as React from "react";
 import { RankingsExpandedView } from "@/features/rankings/components/RankingsExpandedView";
+import { RankingRangeControl } from "@/features/rankings/components/RankingRangeControl";
 import { CollaborationsSection } from "@/features/analysis/components/CollaborationsSection";
 import { type RankingType } from "@/features/rankings/actions";
 import { Section } from "@/components/layout";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Slider } from "@/components/ui/slider";
-import { Button } from "@/components/ui/button";
-import { Minus, Plus } from "lucide-react";
 
-const MIN = 1;
-const MAX = 50;
+const LIMIT_MIN = 1;
+const LIMIT_MAX = 50;
+const LIMIT_DEFAULT = 20;
+
+const RATING_MIN = 1;
+const RATING_MAX = 10;
+const RATING_DEFAULT = 6;
+
+const DEBOUNCE_MS = 600;
 
 interface AnalysisClientWrapperProps {
     userId: string;
@@ -32,44 +37,22 @@ export function AnalysisClientWrapper({ userId }: AnalysisClientWrapperProps) {
 
     // draft: valor en tiempo real (slider + input)
     // committed: valor que dispara la carga de datos (debounced)
-    const [draft, setDraft] = React.useState(20);
-    const [committed, setCommitted] = React.useState(20);
-    const [inputStr, setInputStr] = React.useState("20");
+    const [limitDraft, setLimitDraft] = React.useState(LIMIT_DEFAULT);
+    const [limitCommitted, setLimitCommitted] = React.useState(LIMIT_DEFAULT);
 
-    // Debounce: cuando el slider se mueve, esperar 600 ms antes de recargar
+    const [minRatingDraft, setMinRatingDraft] = React.useState(RATING_DEFAULT);
+    const [minRatingCommitted, setMinRatingCommitted] = React.useState(RATING_DEFAULT);
+
+    // Debounce: esperar DEBOUNCE_MS tras el último cambio antes de recargar.
     React.useEffect(() => {
-        const timer = setTimeout(() => setCommitted(draft), 600);
+        const timer = setTimeout(() => setLimitCommitted(limitDraft), DEBOUNCE_MS);
         return () => clearTimeout(timer);
-    }, [draft]);
+    }, [limitDraft]);
 
-    const clamp = (v: number) => Math.min(MAX, Math.max(MIN, v));
-
-    const applyValue = (v: number) => {
-        const safe = clamp(v);
-        setDraft(safe);
-        setInputStr(String(safe));
-    };
-
-    const handleSlider = (val: number[]) => applyValue(val[0]);
-
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setInputStr(e.target.value);
-    };
-
-    const handleInputBlur = () => {
-        const parsed = parseInt(inputStr, 10);
-        if (!isNaN(parsed)) {
-            applyValue(parsed);
-        } else {
-            setInputStr(String(draft));
-        }
-    };
-
-    const handleInputKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
-        if (e.key === "Enter") (e.target as HTMLInputElement).blur();
-    };
-
-    const step = (delta: number) => applyValue(draft + delta);
+    React.useEffect(() => {
+        const timer = setTimeout(() => setMinRatingCommitted(minRatingDraft), DEBOUNCE_MS);
+        return () => clearTimeout(timer);
+    }, [minRatingDraft]);
 
     return (
         <div className="space-y-10">
@@ -83,63 +66,26 @@ export function AnalysisClientWrapper({ userId }: AnalysisClientWrapperProps) {
                             </p>
                         </div>
 
-                        {/* Filtro de cantidad */}
-                        <div className="flex flex-col gap-2 min-w-[220px] max-w-[280px] w-full sm:w-auto">
-                            <div className="flex items-center justify-between">
-                                <span className="text-xs text-muted-foreground">Cantidad a mostrar</span>
-                                <span className="text-xs font-semibold text-foreground tabular-nums">
-                                    Top {committed}
-                                </span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <Button
-                                    variant="outline"
-                                    size="icon"
-                                    className="h-7 w-7 shrink-0 rounded-md border-border/40"
-                                    onClick={() => step(-1)}
-                                    disabled={draft <= MIN}
-                                    aria-label="Reducir cantidad"
-                                >
-                                    <Minus className="h-3 w-3" />
-                                </Button>
-
-                                <Slider
-                                    min={MIN}
-                                    max={MAX}
-                                    step={1}
-                                    value={[draft]}
-                                    onValueChange={handleSlider}
-                                    className="flex-1"
-                                    aria-label="Número de resultados"
-                                />
-
-                                <Button
-                                    variant="outline"
-                                    size="icon"
-                                    className="h-7 w-7 shrink-0 rounded-md border-border/40"
-                                    onClick={() => step(1)}
-                                    disabled={draft >= MAX}
-                                    aria-label="Aumentar cantidad"
-                                >
-                                    <Plus className="h-3 w-3" />
-                                </Button>
-
-                                <input
-                                    type="number"
-                                    min={MIN}
-                                    max={MAX}
-                                    value={inputStr}
-                                    onChange={handleInputChange}
-                                    onBlur={handleInputBlur}
-                                    onKeyDown={handleInputKey}
-                                    className="h-7 w-12 shrink-0 rounded-md border border-border/40 bg-card/10 text-center text-xs font-semibold tabular-nums focus:outline-none focus:ring-1 focus:ring-primary/50 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-                                    aria-label="Número exacto de resultados"
-                                />
-                            </div>
-                            <div className="flex justify-between text-[10px] text-muted-foreground/60 px-0.5">
-                                <span>{MIN}</span>
-                                <span>{MAX}</span>
-                            </div>
+                        {/* Filtros: cantidad + puntuación mínima */}
+                        <div className="flex flex-wrap items-start gap-x-6 gap-y-4">
+                            <RankingRangeControl
+                                label="Cantidad a mostrar"
+                                value={limitDraft}
+                                min={LIMIT_MIN}
+                                max={LIMIT_MAX}
+                                onChange={setLimitDraft}
+                                valuePrefix="Top "
+                                ariaLabel="Número de resultados"
+                            />
+                            <RankingRangeControl
+                                label="Puntuación mínima"
+                                value={minRatingDraft}
+                                min={RATING_MIN}
+                                max={RATING_MAX}
+                                onChange={setMinRatingDraft}
+                                valuePrefix="★ "
+                                ariaLabel="Puntuación mínima"
+                            />
                         </div>
                     </div>
 
@@ -161,10 +107,11 @@ export function AnalysisClientWrapper({ userId }: AnalysisClientWrapperProps) {
                     </Tabs>
 
                     <RankingsExpandedView
-                        key={`${activeTab}-${committed}`}
+                        key={`${activeTab}-${limitCommitted}-${minRatingCommitted}`}
                         userId={userId}
                         type={activeTab}
-                        limit={committed}
+                        limit={limitCommitted}
+                        minRating={minRatingCommitted}
                     />
                 </div>
             </Section>

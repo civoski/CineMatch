@@ -64,7 +64,11 @@ Agregar un segundo control gemelo al de "Cantidad a mostrar":
 
 ### 2. `src/features/rankings/components/RankingsExpandedView.tsx`
 
-- Agregar prop `minRating?: number` (default `6`) a `RankingsExpandedViewProps`.
+- Agregar prop `minRating?: number` a `RankingsExpandedViewProps`. El default del
+  componente es **1** (idéntico al comportamiento previo fijo), para no alterar a
+  otros consumidores como `collection/components/RankingsSection.tsx` que no pasan
+  el prop. El valor por defecto de UI (**6**) lo impone la página de análisis
+  pasándolo explícitamente.
 - Usar `minRating` en la llamada a `getRanking` en lugar del `1` fijo
   ([`línea 42`](../../../src/features/rankings/components/RankingsExpandedView.tsx#L42)).
 - Agregar `minRating` a las dependencias del `useEffect` de carga.

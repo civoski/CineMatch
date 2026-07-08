@@ -10,6 +10,7 @@ interface RankingsExpandedViewProps {
   userId: string;
   type: RankingType;
   limit?: number;
+  minRating?: number;
   onBack?: () => void;
 }
 
@@ -27,6 +28,7 @@ export function RankingsExpandedView({
   userId,
   type,
   limit = 20,
+  minRating = 1,
   onBack = undefined,
 }: RankingsExpandedViewProps) {
   const [data, setData] = React.useState<RankingStatConfig[]>([]);
@@ -39,7 +41,7 @@ export function RankingsExpandedView({
     const loadFullRanking = async () => {
       try {
         const result = await getRanking(userId, type, {
-          minRating: 1,
+          minRating,
           limit,
         });
         if (isMounted) {
@@ -59,7 +61,7 @@ export function RankingsExpandedView({
     return () => {
       isMounted = false;
     };
-  }, [userId, type, limit]);
+  }, [userId, type, limit, minRating]);
 
   const handleSelectItem = React.useCallback((index: number) => {
     setSelectedIndex((prev) => (prev === index ? null : index));

@@ -4,8 +4,9 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import Image from "@/components/CloudinaryImage";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Star, Film } from "lucide-react";
+import { Star, Film, SlidersHorizontal } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { EmptyState } from "@/components/ui/empty-state";
 import { RankingChartSection } from "./RankingChartSection";
 import { RankingStatsGrid } from "./RankingStatsGrid";
 import { RankingDetailList } from "./RankingDetailList";
@@ -75,6 +76,26 @@ export function RankingsGraphicsPanel({
 
   if (isLoading) {
     return <GraphicsPanelSkeleton />;
+  }
+
+  if (data.length === 0) {
+    return (
+      <div className="flex flex-col gap-8">
+        {/* Header */}
+        <div className="space-y-1">
+          <h3 className="text-xl font-bold text-foreground">Análisis Visual</h3>
+          <p className="text-sm text-muted-foreground">
+            Gráficos interactivos de tus preferencias cinematográficas
+          </p>
+        </div>
+
+        <EmptyState
+          icon={<SlidersHorizontal className="h-12 w-12" />}
+          title="Sin resultados con estos filtros"
+          description="Ninguna película supera la puntuación mínima elegida. Probá bajarla o califica más películas."
+        />
+      </div>
+    );
   }
 
   return (
