@@ -37,6 +37,13 @@ export async function processImport(movies: CsvMovieImport[], filename: string):
         throw new Error('Usuario no autenticado');
     }
 
+    // Guard: nunca registrar una importación sin películas. Antes se creaba el
+    // registro igual y se devolvía success, dejando al usuario con un "listo"
+    // que en realidad no importaba nada.
+    if (movies.length === 0) {
+        throw new Error('El archivo no contiene películas válidas para importar.');
+    }
+
     // 1. Crear registro de importación
     const { data: importRecord, error: importError } = await supabase
         .from('user_imports')

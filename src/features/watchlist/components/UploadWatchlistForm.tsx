@@ -8,6 +8,7 @@ import {
   CheckCircle2,
   BarChart3,
   Info,
+  AlertCircle,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
@@ -47,10 +48,23 @@ export function UploadWatchlistForm({
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
+  // La animación de carga y la subida real terminan por separado. El cartel de
+  // éxito solo debe aparecer cuando AMBAS terminaron bien: antes lo disparaba
+  // solo el temporizador de la animación, así que decía "completado" incluso
+  // cuando la importación había fallado.
+  const [animationDone, setAnimationDone] = React.useState(false);
+  const [uploadOk, setUploadOk] = React.useState(false);
+
   const handleFinished = React.useCallback(() => {
-    setStatus("success");
-    setIsDialogOpen(true);
+    setAnimationDone(true);
   }, []);
+
+  React.useEffect(() => {
+    if (status === "uploading" && animationDone && uploadOk) {
+      setStatus("success");
+      setIsDialogOpen(true);
+    }
+  }, [status, animationDone, uploadOk]);
 
   const validateFile = (fileToValidate: File): string | null => {
     const fileName = fileToValidate.name.toLowerCase();
@@ -72,10 +86,13 @@ export function UploadWatchlistForm({
     }
     setError(null);
     setFile(selectedFile);
+    setAnimationDone(false);
+    setUploadOk(false);
     setStatus("uploading");
     if (onUpload) {
       try {
         await onUpload(selectedFile);
+        setUploadOk(true);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Error al subir");
         setStatus("error");
@@ -165,12 +182,16 @@ export function UploadWatchlistForm({
                   <div
                     className={cn(
                       "p-4 rounded-full transition-colors",
-                      file
-                        ? "bg-primary/10 text-primary"
-                        : "bg-muted text-muted-foreground"
+                      error
+                        ? "bg-destructive/10 text-destructive"
+                        : file
+                          ? "bg-primary/10 text-primary"
+                          : "bg-muted text-muted-foreground"
                     )}
                   >
-                    {file ? (
+                    {error ? (
+                      <AlertCircle className="h-10 w-10" />
+                    ) : file ? (
                       <FileText className="h-10 w-10" />
                     ) : (
                       <Upload className="h-10 w-10" />
@@ -181,11 +202,27 @@ export function UploadWatchlistForm({
                       {file ? file.name : "Arrastra tu archivo CSV aquí"}
                     </p>
                     <p className="text-sm text-muted-foreground">
-                      {file
-                        ? "Listo para procesar"
-                        : "o haz clic para seleccionar"}
+                      {error
+                        ? "Hacé clic para probar con otro archivo"
+                        : file
+                          ? "Listo para procesar"
+                          : "o haz clic para seleccionar"}
                     </p>
                   </div>
+
+                  {error && (
+                    <div
+                      role="alert"
+                      className="mt-1 max-w-md rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3 text-left"
+                    >
+                      <p className="text-sm font-semibold text-destructive">
+                        No pudimos importar este archivo
+                      </p>
+                      <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
+                        {error}
+                      </p>
+                    </div>
+                  )}
                 </motion.div>
               )}
             </AnimatePresence>
