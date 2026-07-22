@@ -14,6 +14,20 @@ export default function UploadPage() {
         skipEmptyLines: true,
         complete: async (results) => {
           try {
+            // El importador se guía por la columna "Const" (el ID de IMDb), que
+            // solo traen los exports de IMDb. Sin ella no se puede identificar
+            // ninguna película, así que avisamos en vez de importar 0 en silencio.
+            const fields = (results.meta?.fields ?? []).map((f) => f.trim());
+            const tieneConst = fields.some(
+              (f) => f.toLowerCase() === "const"
+            );
+
+            if (!tieneConst) {
+              throw new Error(
+                'Este archivo no tiene el formato de IMDb. Exportá tu lista desde IMDb: el CSV debe incluir la columna "Const". Por ahora los archivos de TMDB u otros sitios no están soportados.'
+              );
+            }
+
             const movies: CsvMovieImport[] = results.data
               .map((row: any) => ({
                 imdb_id: row["Const"],
@@ -42,6 +56,14 @@ export default function UploadPage() {
               }))
               .filter((m) => m.imdb_id); // Filtrar filas sin ID
 
+            // El archivo tiene la columna correcta pero ninguna fila utilizable
+            // (vacío, o todas sin ID).
+            if (movies.length === 0) {
+              throw new Error(
+                "No encontramos ninguna película en el archivo. Revisá que sea el export de IMDb y que no esté vacío."
+              );
+            }
+
             const result = await processImport(movies, file.name);
 
             if (result.success) {
@@ -52,8 +74,13 @@ export default function UploadPage() {
             }
           } catch (error) {
             console.error(error);
-            toast.error("Error procesando los datos del CSV.");
-            reject(error);
+            // Propagamos el mensaje real para que el formulario pueda mostrarlo.
+            const mensaje =
+              error instanceof Error
+                ? error.message
+                : "Error procesando los datos del CSV.";
+            toast.error(mensaje);
+            reject(error instanceof Error ? error : new Error(mensaje));
           }
         },
         error: (error) => {
