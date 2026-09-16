@@ -3,7 +3,11 @@ import { Button } from '@/components/ui/button'
 import { Container } from '@/components/layout'
 import { Github, Twitter } from 'lucide-react'
 
-export function Footer({ variant = "landing" }: { variant?: "landing" | "app" }) {
+// ============================================================
+// FOOTER ANTERIOR — CONSERVADO PARA USO FUTURO
+// ============================================================
+
+function LegacyFooter({ variant = "landing" }: { variant?: "landing" | "app" }) {
   const currentYear = new Date().getFullYear()
 
   return (
@@ -171,8 +175,8 @@ export function Footer({ variant = "landing" }: { variant?: "landing" | "app" })
                 </li>
                 <li>
                   <span className="text-sm text-muted-foreground">
-                 Contacto: cinematchvercel@gmail.com
-                </span>
+                    Contacto: cinematchvercel@gmail.com
+                  </span>
                 </li>
                 <li>
                   <Link
@@ -213,6 +217,23 @@ export function Footer({ variant = "landing" }: { variant?: "landing" | "app" })
           </div>
         </div>
       </Container>
+    </footer>
+  )
+}
+
+
+// ============================================================
+// FOOTER ACTUAL — SOLO CONTACTO
+// ============================================================
+
+export function Footer() {
+  return (
+    <footer className="relative border-t border-border bg-muted">
+      <div className="flex justify-center py-8">
+        <span className="text-sm text-muted-foreground">
+          Contacto: cinematchvercel@gmail.com
+        </span>
+      </div>
     </footer>
   )
 }
