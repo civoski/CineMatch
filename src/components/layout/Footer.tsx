@@ -226,7 +226,7 @@ function LegacyFooter({ variant = "landing" }: { variant?: "landing" | "app" }) 
 // FOOTER ACTUAL — SOLO CONTACTO
 // ============================================================
 
-export function Footer() {
+export function Footer({ variant: _variant = "landing" }: { variant?: "landing" | "app" }) {
   return (
     <footer className="relative border-t border-border bg-muted">
       <div className="flex justify-center py-8">
