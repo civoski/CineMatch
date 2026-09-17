@@ -95,7 +95,7 @@ export function MovieCard({ item }: MovieCardProps) {
                     size="sm"
                     className="w-full"
                   >
-                    Cualificar
+                    Etiquetar
                   </Button>
                 </QualificationModal>
               </div>
