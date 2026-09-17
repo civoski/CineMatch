@@ -103,7 +103,7 @@ export default async function MovieDetailPage({ params }: PageProps) {
                       size="sm"
                       className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-semibold shadow-sm hover:shadow-md transition-all"
                     >
-                      Cualificar
+                      Etiquetar
                     </Button>
                   </QualificationModal>
                 </div>
