@@ -31,7 +31,7 @@ export function LandingHero() {
           </div>
 
           <p className="mt-4 text-balance text-xl font-bold tracking-tight text-foreground sm:text-3xl md:text-4xl lg:text-5xl">
-            Un paseo por sus gustos. <span className="text-primary">Descubra su cinefilia.</span>
+            Un paseo por su cinefilia
           </p>
 
           <p className="mt-6 max-w-2xl text-pretty text-base leading-relaxed text-muted-foreground sm:text-lg md:text-xl">
