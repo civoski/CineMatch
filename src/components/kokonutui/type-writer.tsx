@@ -170,28 +170,29 @@ export default function TypewriterTitle({
   return (
     <div className="relative mx-auto w-full max-w-4xl py-24">
       <div className="relative z-10 flex flex-col items-center justify-center text-center">
-        <motion.div
-          animate={{ opacity: 1 }}
-          className="flex items-center gap-1 font-cinematic text-4xl text-black tracking-tight md:text-6xl dark:text-white"
-          initial={{ opacity: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          <span className="inline-block min-h-[1.2em] min-w-[0.5em]">
-            {displayText}
-          </span>
-          <motion.span
-            animate={{
-              opacity: [1, 1, 0, 0],
-            }}
-            className="inline-block h-[1em] w-[3px] bg-black dark:bg-white"
-            transition={{
-              duration: 1,
-              repeat: Number.POSITIVE_INFINITY,
-              repeatType: "loop",
-              ease: "linear",
-            }}
-          />
-        </motion.div>
+              <motion.div
+        animate={{ opacity: 1 }}
+        className="flex items-center gap-1 font-mono text-4xl text-black tracking-tight md:text-6xl dark:text-white"
+        initial={{ opacity: 0 }}
+        style={{ fontFamily: "var(--font-cinematic)" }}
+        transition={{ duration: 0.5 }}
+      >
+        <span className="inline-block min-h-[1.2em] min-w-[0.5em]">
+          {displayText}
+        </span>
+        <motion.span
+          animate={{
+            opacity: [1, 1, 0, 0],
+          }}
+          className="inline-block h-[1em] w-[3px] bg-black dark:bg-white"
+          transition={{
+            duration: 1,
+            repeat: Number.POSITIVE_INFINITY,
+            repeatType: "loop",
+            ease: "linear",
+          }}
+        />
+      </motion.div>
       </div>
     </div>
   );
