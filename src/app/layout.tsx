@@ -1,4 +1,4 @@
-import { Fraunces, Inter } from "next/font/google";
+import { Cinzel, Fraunces, Inter } from "next/font/google";
 import { Toaster } from "sonner";
 import { ThemeProvider, AuthProvider, QueryProvider } from "@/lib/providers";
 import { ScrollToTop } from "@/components/ScrollToTop";
@@ -8,6 +8,13 @@ const fraunces = Fraunces({
   subsets: ["latin"],
   weight: ["600", "700"],
   variable: "--font-heading",
+  display: "swap",
+});
+
+const cinzel = Cinzel({
+  subsets: ["latin"],
+  weight: ["600", "700"],
+  variable: "--font-cinematic",
   display: "swap",
 });
 
@@ -26,7 +33,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${fraunces.variable} ${inter.variable}`}
+      className={`${fraunces.variable} ${inter.variable} ${cinzel.variable}`}
       suppressHydrationWarning
     >
       <body>
@@ -43,4 +50,3 @@ export default function RootLayout({
     </html>
   );
 }
-
