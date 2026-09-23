@@ -172,7 +172,7 @@ export default function TypewriterTitle({
       <div className="relative z-10 flex flex-col items-center justify-center text-center">
         <motion.div
           animate={{ opacity: 1 }}
-          className="flex items-center gap-1 font-mono text-4xl text-black tracking-tight md:text-6xl dark:text-white"
+          className="flex items-center gap-1 font-cinematic text-4xl text-black tracking-tight md:text-6xl dark:text-white"
           initial={{ opacity: 0 }}
           transition={{ duration: 0.5 }}
         >
