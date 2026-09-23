@@ -24,7 +24,7 @@ export function LandingHero() {
         containerClassName="min-h-screen w-full flex flex-col"
         className="flex flex-col items-center"
       >
-        <div className="mx-auto flex max-w-7xl flex-col items-center justify-center px-4 pt-20 pb-10 text-center sm:px-6 md:pt-28 lg:px-8">
+        <div className="mx-auto flex max-w-7xl flex-col items-center justify-center px-4 pt-10 pb-10 text-center sm:px-6 md:pt-14 lg:px-8">
           
           <div className="cinematch-typewriter-wrapper mb-4">
             <CinematchTypewriter />
