@@ -9,7 +9,12 @@ interface CinematchTypewriterProps {
 
 export function CinematchTypewriter({ className }: CinematchTypewriterProps) {
   return (
-    <div className={cn("mx-auto w-full cinematch-typewriter-wrapper", className)}>
+    <div
+      className={cn(
+        "mx-auto w-full cinematch-typewriter-wrapper font-cinematic",
+        className
+      )}
+    >
       {/* Hidden H1 for SEO and accessibility */}
       <h1 className="sr-only">Cinematch - Descubra su cinefilia</h1>
 
