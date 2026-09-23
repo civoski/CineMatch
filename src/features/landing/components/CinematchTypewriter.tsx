@@ -20,7 +20,7 @@ export function CinematchTypewriter({ className }: CinematchTypewriterProps) {
         aria-level={1}
       >
         <TypewriterTitle
-          sequences={[{ text: "CINEMATCH", deleteAfter: true }]}
+          sequences={[{ text: "CineMatch", deleteAfter: true }]}
           typingSpeed={80}
           deleteSpeed={40}
           pauseBeforeDelete={3000}
