@@ -72,8 +72,9 @@ export function LandingHero() {
         <div className="w-full mt-auto pb-12 md:pb-20">
           <TrendingCarousel />
         </div>
+        */}
       </WavyBackground>
     </section>
   );
 }
-*/}
+
