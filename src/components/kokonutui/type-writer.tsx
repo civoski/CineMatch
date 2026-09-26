@@ -168,7 +168,7 @@ export default function TypewriterTitle({
   ]);
 
   return (
-    <div className="relative mx-auto w-full max-w-4xl py-24">
+    <div className="relative mx-auto w-full max-w-4xl pt-12 pb-24">
       <div className="relative z-10 flex flex-col items-center justify-center text-center">
               <motion.div
         animate={{ opacity: 1 }}
