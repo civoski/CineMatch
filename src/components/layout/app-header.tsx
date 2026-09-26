@@ -83,7 +83,7 @@ export function AppHeader({ variant = "default" }: AppHeaderProps) {
         </div>
 
         {/* SECCIÓN CENTRAL: Navegación (Solo Desktop) */}
-        <div className="hidden md:flex items-center justify-center">
+        <div className="absolute left-1/2 -translate-x-1/2 hidden md:flex items-center justify-center">
           <AppNav variant={variant} />
         </div>
 
