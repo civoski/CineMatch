@@ -66,7 +66,7 @@ export function AppHeader({ variant = "default" }: AppHeaderProps) {
     )}>
       <div className="mx-auto flex h-14 w-full max-w-7xl items-center px-4 sm:px-6 lg:px-8">
         {/* SECCIÓN IZQUIERDA: Logo */}
-        <div className="flex flex-1 items-center justify-start">
+        <div className="hidden flex-1 items-center justify-start">
           <Link
             href={APP_ROUTES.HOME}
             className={cn(
