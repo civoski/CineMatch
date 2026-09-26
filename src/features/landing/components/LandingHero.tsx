@@ -66,9 +66,9 @@ export function LandingHero() {
               </Link>
             </Button>
           </div>
-          */}
+*/}
         </div>
-        
+        {/*
         <div className="w-full mt-auto pb-12 md:pb-20">
           <TrendingCarousel />
         </div>
@@ -76,3 +76,4 @@ export function LandingHero() {
     </section>
   );
 }
+*/}
