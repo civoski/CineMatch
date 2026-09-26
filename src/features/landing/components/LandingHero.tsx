@@ -41,7 +41,7 @@ export function LandingHero() {
         </p>
 
           
-
+          {/*
           <div className="mt-10 flex w-full flex-col items-center gap-4 sm:flex-row sm:justify-center sm:gap-6">
             <Button
               size="lg"
@@ -67,7 +67,7 @@ export function LandingHero() {
             </Button>
           </div>
         </div>
-
+        */}
         <div className="w-full mt-auto pb-12 md:pb-20">
           <TrendingCarousel />
         </div>
