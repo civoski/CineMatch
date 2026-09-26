@@ -40,11 +40,7 @@ export function LandingHero() {
           Revele conexiones y explore sus listas a través de una interfaz visual e intuitiva que transformará la forma en que descubre y analiza películas.
         </p>
 
-          <div className="mt-8">
-            <span className="inline-flex items-center rounded-full border border-primary/20 bg-primary/5 px-6 py-2 text-xs font-semibold uppercase tracking-widest text-primary shadow-sm backdrop-blur-md dark:border-white/20 dark:bg-white/10 dark:text-foreground/90 sm:text-sm">
-              Importe su lista desde IMDb y descubra su cinefilia
-            </span>
-          </div>
+          
 
           <div className="mt-10 flex w-full flex-col items-center gap-4 sm:flex-row sm:justify-center sm:gap-6">
             <Button
