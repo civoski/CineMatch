@@ -21,7 +21,7 @@ export function LandingHero() {
         blur={12}
         speed="fast"
         waveVerticalPosition={0.45}
-        containerClassName="min-h-screen w-full flex flex-col"
+        containerClassName="w-full flex flex-col"
         className="flex flex-col items-center"
       >
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-center px-4 pt-4 pb-10 text-center sm:px-6 md:pt-4 lg:px-8">
