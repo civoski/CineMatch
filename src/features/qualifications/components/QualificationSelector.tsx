@@ -232,7 +232,11 @@ export function QualificationSelector({ movieId, categories, onComplete, onStepC
                           <Check className="h-3.5 w-3.5 shrink-0" />
                         </motion.span>
                       )}
-                      <span className="leading-tight select-none">{quality.name}</span>
+                      <span className="leading-tight select-none">
+                        {quality.name === "Fotografía y dirección de arte"
+                          ? "Fotografía"
+                          : quality.name}
+                      </span>
                     </motion.button>
                   );
                 })}
