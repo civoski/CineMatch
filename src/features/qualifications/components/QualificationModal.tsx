@@ -97,9 +97,7 @@ export function QualificationModal({
             <div className="inline-flex items-center justify-center p-3 rounded-2xl bg-primary/10 mb-4 animate-bounce-slow">
               <Film className="h-6 w-6 text-primary" />
             </div>
-            <DialogTitle className="text-2xl sm:text-3xl font-black tracking-tight text-balance">
-              ¿Qué te gustó de esta película?
-            </DialogTitle>
+            
             <DialogDescription className="text-base text-foreground/60 font-medium">
               Explora y elige lo que más te resonó de <span className="text-primary font-bold">{movieTitle}</span>
             </DialogDescription>
