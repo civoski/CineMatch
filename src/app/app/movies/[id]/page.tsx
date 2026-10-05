@@ -94,7 +94,7 @@ export default async function MovieDetailPage({ params }: PageProps) {
                     <span>En tu lista</span>
                   </div>
                 )}
-
+                {/*
                 {/* Botón Cualificar - Alineado con los géneros */}
                 <div className="pt-4">
                   <QualificationModal movieId={movie.id} movieTitle={movie.title}>
@@ -107,6 +107,7 @@ export default async function MovieDetailPage({ params }: PageProps) {
                     </Button>
                   </QualificationModal>
                 </div>
+                */}
               </div>
 
               {/* Columna Derecha: Información Principal (Baja respecto al poster) */}
