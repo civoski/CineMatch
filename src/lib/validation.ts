@@ -41,7 +41,7 @@ export const importItemSchema = z.object({
  */
 export const processImportSchema = z.object({
     movies: z.array(importItemSchema).min(1, "Debe haber al menos una película"),
-    source: z.enum(["letterboxd", "imdb", "manual"]).default("manual"),
+    source: z.enum(["letterboxd", "imdb", "tmdb", "manual"]).default("manual"),
 });
 
 // ============ Types ============

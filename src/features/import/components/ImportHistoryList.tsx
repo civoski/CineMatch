@@ -2,7 +2,7 @@
 
 import { useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import { Trash2, FileText, CheckCircle2, Clock, AlertCircle, Loader2, Film, Calendar } from 'lucide-react';
+import { Trash2, FileText, CheckCircle2, Clock, AlertCircle, Loader2, Film, Calendar, SearchX, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -131,6 +131,27 @@ export function ImportHistoryList({ imports }: ImportHistoryListProps) {
                                                 </Badge>
                                             )}
                                         </div>
+
+                                        {item.not_found.length > 0 && (
+                                            <details className="group/details pt-2">
+                                                <summary className="flex w-fit cursor-pointer list-none items-center gap-1.5 text-xs font-medium text-amber-700 dark:text-amber-400 [&::-webkit-details-marker]:hidden">
+                                                    <SearchX className="size-3.5" />
+                                                    {item.not_found.length} {item.not_found.length === 1 ? 'película no se pudo identificar' : 'películas no se pudieron identificar'}
+                                                    <ChevronDown className="size-3.5 transition-transform group-open/details:rotate-180" />
+                                                </summary>
+                                                <ul className="mt-2 max-h-56 overflow-y-auto rounded-lg border border-border/60 bg-muted/30 px-3 py-2 text-xs text-muted-foreground space-y-1">
+                                                    {item.not_found.map((movie, index) => (
+                                                        <li key={`${movie.title}-${index}`} className="flex justify-between gap-3">
+                                                            <span className="truncate">
+                                                                {movie.title}
+                                                                {movie.year ? ` (${movie.year})` : ''}
+                                                            </span>
+                                                            <span className="shrink-0 text-muted-foreground/70">{movie.reason}</span>
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            </details>
+                                        )}
                                     </div>
                                 </div>
 

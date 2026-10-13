@@ -4,22 +4,9 @@ import { createClient } from '@/lib/supabase/server';
 import { tmdb } from '@/lib/tmdb';
 import { revalidatePath } from 'next/cache';
 import { after } from 'next/server';
-
-export type CsvMovieImport = {
-    imdb_id: string; // Const
-    title: string;
-    year: number;
-    user_rating?: number; // Tu Calificación
-    date_rated?: string; // Fecha de Calificación
-    genres?: string;
-    url?: string;
-    imdb_rating?: number; // Calificación IMDb
-    runtime_mins?: number; // Duración (mins)
-    release_date?: string; // Fecha de Lanzamiento
-    directors?: string; // Directores
-    num_votes?: number; // Núm Votos
-    position?: number; // Orden en lista
-};
+import { createClient as createServiceClient } from '@supabase/supabase-js';
+// El tipo vive en ./types: un archivo 'use server' solo puede exportar funciones async.
+import type { CsvMovieImport } from './types';
 
 type ImportResult = {
     success: boolean;
@@ -66,26 +53,6 @@ export async function processImport(movies: CsvMovieImport[], filename: string):
 
     // Procesamiento por lotes para insertar en la cola
     const BATCH_SIZE = 100;
-
-    // Obtener items ya en cola para este usuario (pending o processing)
-    const { data: existingItems } = await supabase
-        .from('import_queue')
-        .select('payload')
-        .eq('user_id', user.id)
-        .in('status', ['pending', 'processing']);
-
-    // Extraer IDs existentes
-    type QueuePayload = { imdb_id?: string; import_id?: string };
-    const existingImdbIds = new Set<string>();
-    if (existingItems) {
-        existingItems.forEach((item: { payload: QueuePayload }) => {
-            if (item.payload?.imdb_id) {
-                existingImdbIds.add(item.payload.imdb_id);
-            }
-        });
-    }
-
-    const moviesToInsert = movies.filter(m => !existingImdbIds.has(m.imdb_id));
 
     // Encolamos todas las películas del CSV para asegurar la vinculación con este Import ID.
     // El worker maneja la idempotencia: si la película ya existe, solo crea el link en 'import_items'.
@@ -149,12 +116,21 @@ async function triggerWorker() {
     }
 }
 
+// Película del archivo que el worker no pudo procesar (p. ej. un título de
+// Letterboxd que no se encontró en TMDB).
+export type NotFoundMovie = {
+    title: string;
+    year?: number;
+    reason: string;
+};
+
 export type UserImport = {
     id: string;
     filename: string;
     imported_at: string;
     status: string;
     counts: { total: number; new: number; updated: number };
+    not_found: NotFoundMovie[];
 };
 
 export async function getImports(): Promise<UserImport[]> {
@@ -163,13 +139,37 @@ export async function getImports(): Promise<UserImport[]> {
 
     if (!user) return [];
 
-    const { data } = await supabase
-        .from('user_imports')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('imported_at', { ascending: false });
+    const [{ data }, { data: failedItems }] = await Promise.all([
+        supabase
+            .from('user_imports')
+            .select('*')
+            .eq('user_id', user.id)
+            .order('imported_at', { ascending: false }),
+        // Los items fallidos quedan en la cola con status 'failed'
+        supabase
+            .from('import_queue')
+            .select('payload, error_message')
+            .eq('user_id', user.id)
+            .eq('status', 'failed'),
+    ]);
 
-    return data || [];
+    const notFoundByImport = new Map<string, NotFoundMovie[]>();
+    for (const item of failedItems ?? []) {
+        const importId = item.payload?.import_id;
+        if (!importId) continue;
+        const list = notFoundByImport.get(importId) ?? [];
+        list.push({
+            title: item.payload.title || item.payload.imdb_id || 'Sin título',
+            year: item.payload.year || undefined,
+            reason: item.error_message || 'Error',
+        });
+        notFoundByImport.set(importId, list);
+    }
+
+    return (data || []).map((imp) => ({
+        ...imp,
+        not_found: (notFoundByImport.get(imp.id) ?? []).sort((a, b) => a.title.localeCompare(b.title)),
+    }));
 }
 
 export async function deleteImport(importId: string) {
@@ -209,6 +209,23 @@ export async function deleteImport(importId: string) {
     const { error } = await supabase.from('user_imports').delete().eq('id', importId).eq('user_id', user.id);
 
     if (error) throw error;
+
+    // 3. Limpiar de la cola las películas no encontradas de esta importación.
+    // `import_queue` no tiene política de DELETE para usuarios, así que usamos el
+    // cliente de servicio, acotado al usuario autenticado.
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (serviceKey) {
+        const admin = createServiceClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, serviceKey, {
+            auth: { autoRefreshToken: false, persistSession: false }
+        });
+        const { error: queueError } = await admin
+            .from('import_queue')
+            .delete()
+            .eq('user_id', user.id)
+            .eq('status', 'failed')
+            .eq('payload->>import_id', importId);
+        if (queueError) console.error('Error limpiando items fallidos de la importación:', queueError);
+    }
 
     revalidatePath('/app/library');
     revalidatePath('/app/imports');
