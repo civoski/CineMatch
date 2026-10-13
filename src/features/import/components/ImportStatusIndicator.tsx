@@ -4,10 +4,10 @@ import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
-import { CheckCircle2, RefreshCw, BarChart3 } from 'lucide-react';
+import { CheckCircle2, RefreshCw, BarChart3, SearchX } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-type ImportState = 'idle' | 'processing' | 'calculating_stats' | 'completed' | 'error';
+type ImportState = 'idle' | 'processing' | 'calculating_stats' | 'completed';
 
 // Hook para detectar si es móvil
 function useIsMobile(breakpoint = 768) {
@@ -29,6 +29,8 @@ function useIsMobile(breakpoint = 768) {
 export function ImportStatusIndicator() {
   const [pendingCount, setPendingCount] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
+  // Películas que el worker no pudo procesar (p. ej. no encontradas en TMDB)
+  const [failedCount, setFailedCount] = useState(0);
   const [importState, setImportState] = useState<ImportState>('idle');
   const [isVisible, setIsVisible] = useState(false);
   const isMobile = useIsMobile();
@@ -40,6 +42,7 @@ export function ImportStatusIndicator() {
     router.refresh();
     setIsVisible(false);
     setImportState('idle');
+    setFailedCount(0);
   }, [router]);
 
   // Función para navegar al análisis
@@ -48,6 +51,16 @@ export function ImportStatusIndicator() {
     router.refresh();
     setIsVisible(false);
     setImportState('idle');
+    setFailedCount(0);
+  }, [router]);
+
+  // Función para ver qué películas no se pudieron identificar
+  const handleNavigateToImports = useCallback(() => {
+    router.push('/app/imports');
+    router.refresh();
+    setIsVisible(false);
+    setImportState('idle');
+    setFailedCount(0);
   }, [router]);
 
   // Auto-ocultar después de un tiempo si está completado
@@ -56,6 +69,7 @@ export function ImportStatusIndicator() {
       const timer = setTimeout(() => {
         setIsVisible(false);
         setImportState('idle');
+        setFailedCount(0);
       }, 15000); // 15 segundos antes de auto-ocultar
       return () => clearTimeout(timer);
     }
@@ -121,8 +135,13 @@ export function ImportStatusIndicator() {
               setPendingCount(prev => Math.max(0, prev - 1));
             }
             if (payload.eventType === 'UPDATE') {
+              // Un item fallido sale de la cola de pendientes pero no se borra.
+              // No cortamos la importación: se informa al terminar.
               const newRecord = payload.new as { status?: string };
-              if (newRecord.status === 'failed') setImportState('error');
+              if (newRecord.status === 'failed') {
+                setPendingCount(prev => Math.max(0, prev - 1));
+                setFailedCount(prev => prev + 1);
+              }
             }
           }
         )
@@ -192,6 +211,26 @@ export function ImportStatusIndicator() {
           setPendingCount(count);
           // Si la cuenta llega a 0, el efecto de arriba cambiará el estado a calculating_stats
         }
+
+        // Recuento exacto de fallidos de las importaciones en curso (corrige
+        // eventos Realtime perdidos o una recarga de página a mitad de camino)
+        const { data: activeImports } = await supabase
+          .from('user_imports')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('status', 'processing');
+
+        const activeIds = (activeImports ?? []).map(i => i.id);
+        if (activeIds.length > 0) {
+          const { count: failed } = await supabase
+            .from('import_queue')
+            .select('*', { count: 'exact', head: true })
+            .eq('user_id', user.id)
+            .eq('status', 'failed')
+            .in('payload->>import_id', activeIds);
+
+          if (failed !== null) setFailedCount(failed);
+        }
       }
 
       // 2. Verificar estado del perfil (rankings)
@@ -236,6 +275,9 @@ export function ImportStatusIndicator() {
         <div className="flex flex-col min-w-[180px]">
           <span className="font-semibold text-sm text-foreground">Importando películas...</span>
           <span className="text-xs text-muted-foreground">Faltan {pendingCount} de {totalCount} ({progress}%)</span>
+          {failedCount > 0 && (
+            <span className="text-xs text-amber-700 dark:text-amber-400">{failedCount} sin identificar</span>
+          )}
           <div className="w-full h-1 bg-muted rounded-full mt-2 overflow-hidden">
             <div className="h-full bg-primary transition-all duration-300 ease-out" style={{ width: `${progress}%` }} />
           </div>
@@ -269,6 +311,12 @@ export function ImportStatusIndicator() {
             <div>
               <span className="font-semibold text-sm text-foreground block">¡Rankings Listos!</span>
               <span className="text-xs text-muted-foreground">Importación y análisis completados.</span>
+              {failedCount > 0 && (
+                <span className="mt-1 flex items-center gap-1.5 text-xs text-amber-700 dark:text-amber-400">
+                  <SearchX className="h-3.5 w-3.5 shrink-0" />
+                  {failedCount === 1 ? '1 película no se pudo identificar.' : `${failedCount} películas no se pudieron identificar.`}
+                </span>
+              )}
             </div>
             <div className="flex gap-2 mt-1">
               <Button size="sm" variant="default" className="h-7 text-xs gap-1.5" onClick={handleNavigateToAnalysis}>
@@ -279,23 +327,15 @@ export function ImportStatusIndicator() {
                 <RefreshCw className="h-3.5 w-3.5" />
                 Refrescar
               </Button>
+              {failedCount > 0 && (
+                <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={handleNavigateToImports}>
+                  Ver detalle
+                </Button>
+              )}
             </div>
           </div>
-          <button onClick={() => setIsVisible(false)} className="text-muted-foreground hover:text-foreground ml-2">×</button>
+          <button onClick={() => { setIsVisible(false); setFailedCount(0); }} className="text-muted-foreground hover:text-foreground ml-2">×</button>
         </div>
-      </div>
-    );
-  }
-
-  // Estado de error
-  if (importState === 'error') {
-    return (
-      <div className={cn(positionClasses, "bg-destructive/10 border border-destructive/30 px-4 py-3 rounded-lg shadow-lg flex items-center gap-3 z-50 animate-in slide-in-from-bottom-5")}>
-        <div className="flex flex-col">
-          <span className="font-semibold text-sm text-destructive">Error en la importación</span>
-          <span className="text-xs text-muted-foreground">Algunas películas no pudieron procesarse</span>
-        </div>
-        <button onClick={() => setIsVisible(false)} className="text-muted-foreground hover:text-foreground ml-2">×</button>
       </div>
     );
   }

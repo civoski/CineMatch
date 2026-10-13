@@ -28,6 +28,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import type { UploadStatus } from "../types";
+import { ExportInstructions } from "./ExportInstructions";
 
 interface UploadWatchlistFormProps {
   onUpload?: (file: File) => Promise<void> | void;
@@ -68,8 +69,8 @@ export function UploadWatchlistForm({
 
   const validateFile = (fileToValidate: File): string | null => {
     const fileName = fileToValidate.name.toLowerCase();
-    if (!fileName.endsWith(".csv"))
-      return "Solo se permiten archivos CSV (.csv)";
+    if (!fileName.endsWith(".csv") && !fileName.endsWith(".zip"))
+      return "Solo se permiten archivos CSV (.csv) o el .zip que exporta Letterboxd";
     if (fileToValidate.size > maxSizeMB * 1024 * 1024)
       return `Máximo: ${maxSizeMB}MB`;
     return null;
@@ -144,7 +145,7 @@ export function UploadWatchlistForm({
             <input
               ref={fileInputRef}
               type="file"
-              accept=".csv"
+              accept=".csv,.zip"
               onChange={(e) => {
                 const f = e.target.files?.[0];
                 if (f) handleFileSelect(f);
@@ -199,7 +200,7 @@ export function UploadWatchlistForm({
                   </div>
                   <div className="space-y-1">
                     <p className="text-lg font-medium">
-                      {file ? file.name : "Arrastra tu archivo CSV aquí"}
+                      {file ? file.name : "Arrastra tu archivo CSV o ZIP aquí"}
                     </p>
                     <p className="text-sm text-muted-foreground">
                       {error
@@ -234,7 +235,7 @@ export function UploadWatchlistForm({
         <StepItem
           icon={<Info />}
           title="Paso 1: Exportar"
-          desc="Exporta tu lista desde IMDB en formato CSV."
+          desc="Exporta tu lista desde IMDb, TMDB o Letterboxd (CSV o el .zip de Letterboxd)."
         />
         <StepItem
           icon={<Upload />}
@@ -247,6 +248,8 @@ export function UploadWatchlistForm({
           desc="¡Listo! Revisa tu análisis visual y estadísticas."
         />
       </div>
+
+      <ExportInstructions />
 
       <AlertDialog 
         open={isDialogOpen} 
