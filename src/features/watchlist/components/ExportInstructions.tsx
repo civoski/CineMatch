@@ -36,7 +36,7 @@ const PLATFORMS: Platform[] = [
       "Entrá a letterboxd.com desde la computadora e iniciá sesión.",
       "Andá a Ajustes → Datos (Settings → Data).",
       "Tocá \"Exportar tus datos\" y descargá el .zip.",
-      "Subí el .zip tal cual: tomamos tus calificaciones (ratings.csv). También podés subir el ratings.csv suelto.",
+      "Subí el .zip tal cual: tomamos todas las películas que marcaste como vistas, con su nota si la tienen. También podés subir el ratings.csv o el watched.csv sueltos.",
     ],
     note: "Letterboxd no incluye códigos de película: identificamos cada una por título y año. Si alguna no se encuentra, la vas a ver en el historial de importaciones.",
   },
