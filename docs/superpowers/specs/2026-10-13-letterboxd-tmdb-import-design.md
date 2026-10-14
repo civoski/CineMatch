@@ -24,7 +24,7 @@ La landing ya anuncia "Compatible con IMDb, TMDb y Letterboxd".
 | TMDB (Export CSV de calificaciones / watchlist / favoritos) | `TMDb ID, IMDb ID, Type, Name, Release Date, Season Number, Episode Number, Rating, Your Rating, Date Rated` | `TMDb ID` (+ `IMDb ID` si viene) |
 | Letterboxd `ratings.csv` (y `watched.csv`, `watchlist.csv`, `diary.csv`) | `Date, Name, Year, Letterboxd URI, Rating` | **ninguno**: título + año |
 | Letterboxd, lista exportada | `Letterboxd list export v7` + metadatos + línea en blanco + `Position, Name, Year, URL, Description` | ninguno |
-| Letterboxd `.zip` (Ajustes → Datos → Exportar) | contiene `ratings.csv` | ninguno |
+| Letterboxd `.zip` (Ajustes → Datos → Exportar) | contiene `watched.csv` y `ratings.csv` (entre otros) | ninguno |
 
 El formato se detecta por la cabecera, sin que el usuario elija nada. Las columnas
 se buscan sin distinguir mayúsculas y con alias (`Name`/`Title`, `Your Rating`/`Rating`),
@@ -34,7 +34,7 @@ porque no tenemos los archivos de ejemplo del cliente.
 
 | Decisión | Elección |
 |---|---|
-| Del `.zip` de Letterboxd se importa | `ratings.csv` (lo que pidió el cliente). Si no existe, se informa. |
+| Del `.zip` de Letterboxd se importa | `watched.csv` (vistas, aunque no tengan nota) + `ratings.csv` (notas). Una película que está en los dos entra una vez, con su nota. Si falta uno, se usa el otro; si faltan los dos, se informa. (Ampliado el 2026-10-14 a pedido del cliente: originalmente solo `ratings.csv`.) |
 | Escala Letterboxd (0,5–5 ★) | `round(rating × 2)` → 1–10 enteros exactos. |
 | Escala TMDB (`Your Rating`, admite medios puntos) | `round(rating)`, acotado a 1–10. |
 | Filas de episodios en el export de TMDB | Se descartan (`Type = episode` o `Season/Episode Number` con valor). |

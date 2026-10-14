@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { strToU8, zipSync } from 'fflate';
 import {
     ImportFormatError,
-    extractLetterboxdRatings,
     letterboxdStarsToTen,
+    parseLetterboxdZip,
     parseImportCsv,
     readImportFile,
     tmdbRatingToTen,
@@ -150,28 +150,49 @@ describe('parseImportCsv', () => {
 });
 
 describe('.zip de Letterboxd', () => {
-    const zip = zipSync({
-        'ratings.csv': strToU8(LETTERBOXD_RATINGS_CSV),
-        'watched.csv': strToU8('Date,Name,Year,Letterboxd URI\n2024-01-10,Otra,2019,https://boxd.it/x'),
-        'deleted/ratings.csv': strToU8('Date,Name,Year,Letterboxd URI,Rating\n2024-01-10,Borrada,2019,https://boxd.it/y,1'),
+    const WATCHED_CSV = [
+        'Date,Name,Year,Letterboxd URI',
+        '2024-01-01,Parasite,2019,https://boxd.it/hTha',
+        '2024-01-02,Otra,2019,https://boxd.it/x',
+        '2024-01-03,Amélie,2001,https://boxd.it/2bfe',
+    ].join('\n');
+
+    it('combina watched.csv y ratings.csv: entran las vistas sin nota y las calificadas conservan su nota', () => {
+        const zip = zipSync({
+            'ratings.csv': strToU8(LETTERBOXD_RATINGS_CSV),
+            'watched.csv': strToU8(WATCHED_CSV),
+            'deleted/ratings.csv': strToU8('Date,Name,Year,Letterboxd URI,Rating\n2024-01-10,Borrada,2019,https://boxd.it/y,1'),
+        });
+        const { source, movies } = parseLetterboxdZip(zip);
+        expect(source).toBe('letterboxd');
+        const byTitle = Object.fromEntries(movies.map((m) => [m.title, m.user_rating]));
+        expect(byTitle).toEqual({
+            Parasite: 10,
+            'Crouching Tiger, Hidden Dragon': 9,
+            Amélie: 1,
+            Otra: undefined,
+        });
     });
 
-    it('extrae el ratings.csv principal (no el de deleted/)', () => {
-        expect(extractLetterboxdRatings(zip)).toBe(LETTERBOXD_RATINGS_CSV);
-    });
-
-    it('acepta el ratings.csv dentro de una carpeta', () => {
+    it('acepta los archivos dentro de una carpeta', () => {
         const nested = zipSync({ 'letterboxd-user-2026/ratings.csv': strToU8(LETTERBOXD_RATINGS_CSV) });
-        expect(extractLetterboxdRatings(nested)).toBe(LETTERBOXD_RATINGS_CSV);
+        expect(parseLetterboxdZip(nested).movies).toHaveLength(3);
     });
 
-    it('sin ratings.csv: error explicativo', () => {
-        const sinRatings = zipSync({ 'watched.csv': strToU8('Date,Name,Year,Letterboxd URI') });
-        expect(() => extractLetterboxdRatings(sinRatings)).toThrow(ImportFormatError);
+    it('solo watched.csv: importa las vistas sin nota', () => {
+        const soloVistas = zipSync({ 'watched.csv': strToU8(WATCHED_CSV) });
+        const { movies } = parseLetterboxdZip(soloVistas);
+        expect(movies).toHaveLength(3);
+        expect(movies.every((m) => m.user_rating === undefined)).toBe(true);
+    });
+
+    it('sin ratings.csv ni watched.csv: error explicativo', () => {
+        const sinDatos = zipSync({ 'watchlist.csv': strToU8('Date,Name,Year,Letterboxd URI\n2024-01-10,Otra,2019,https://boxd.it/x') });
+        expect(() => parseLetterboxdZip(sinDatos)).toThrow(ImportFormatError);
     });
 
     it('un archivo que no es zip: error explicativo', () => {
-        expect(() => extractLetterboxdRatings(strToU8('esto no es un zip'))).toThrow(ImportFormatError);
+        expect(() => parseLetterboxdZip(strToU8('esto no es un zip'))).toThrow(ImportFormatError);
     });
 });
 

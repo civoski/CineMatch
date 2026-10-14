@@ -23,7 +23,7 @@ export class ImportFormatError extends Error {
 }
 
 const UNKNOWN_FORMAT_MESSAGE =
-    'No reconocemos el formato de este archivo. Subí el CSV que exporta IMDb o TMDB, o el .zip (o el ratings.csv) que descargás de Letterboxd en Ajustes → Datos.';
+    'No reconocemos el formato de este archivo. Subí el CSV que exporta IMDb o TMDB, o el .zip que descargás de Letterboxd en Ajustes → Datos (también sirven sus archivos ratings.csv o watched.csv sueltos).';
 
 const NO_ROWS_MESSAGE: Record<ImportSource, string> = {
     imdb: 'No encontramos ninguna película en el archivo. Revisá que sea el export de IMDb y que no esté vacío.',
@@ -208,37 +208,65 @@ export function parseImportCsv(csv: string): ParsedImport {
     return { source, movies, skipped: mapped.length - movies.length };
 }
 
+// Archivos del .zip de Letterboxd que importamos. `watched.csv` va primero: al
+// deduplicar, la fila de `ratings.csv` (con nota) pisa a la de `watched.csv`.
+const LETTERBOXD_ZIP_FILES = ['watched.csv', 'ratings.csv'];
+
+const fileName = (path: string) => path.toLowerCase().split('/').pop() ?? '';
+
 /**
- * Del .zip que exporta Letterboxd (Ajustes → Datos) sacamos `ratings.csv`.
+ * Del .zip que exporta Letterboxd (Ajustes → Datos) importamos las películas vistas
+ * (`watched.csv`, aunque no tengan nota) y las calificadas (`ratings.csv`). Una
+ * película que está en los dos archivos entra una sola vez, con su nota.
  * Ignora las copias de las carpetas `deleted/` y `orphaned/`.
  */
-export function extractLetterboxdRatings(zipBytes: Uint8Array): string {
+export function parseLetterboxdZip(zipBytes: Uint8Array): ParsedImport {
     let files: Record<string, Uint8Array>;
     try {
         files = unzipSync(zipBytes, {
-            filter: (file) => {
-                const path = file.name.toLowerCase();
-                return path.split('/').pop() === 'ratings.csv' && !/(^|\/)(deleted|orphaned)\//.test(path);
-            },
+            filter: (file) =>
+                LETTERBOXD_ZIP_FILES.includes(fileName(file.name)) &&
+                !/(^|\/)(deleted|orphaned)\//i.test(file.name),
         });
     } catch {
         throw new ImportFormatError('No pudimos abrir el .zip. Descargalo de nuevo desde Letterboxd (Ajustes → Datos) y volvé a subirlo.');
     }
 
-    // Si hubiera más de uno, el de menor profundidad es el principal.
-    const [ratingsPath] = Object.keys(files).sort((a, b) => a.split('/').length - b.split('/').length);
-    if (!ratingsPath) {
-        throw new ImportFormatError('El .zip no contiene el archivo ratings.csv. Subí el .zip que descargás de Letterboxd en Ajustes → Datos.');
+    // Si un archivo aparece más de una vez, el de menor profundidad es el principal.
+    const paths = Object.keys(files).sort((a, b) => a.split('/').length - b.split('/').length);
+    const csvs = LETTERBOXD_ZIP_FILES
+        .map((name) => paths.find((path) => fileName(path) === name))
+        .filter((path): path is string => path !== undefined)
+        .map((path) => strFromU8(files[path]));
+
+    if (csvs.length === 0) {
+        throw new ImportFormatError('El .zip no contiene watched.csv ni ratings.csv. Subí el .zip que descargás de Letterboxd en Ajustes → Datos.');
     }
 
-    return strFromU8(files[ratingsPath]);
+    // Un archivo vacío (p. ej. nunca calificaste nada) no impide importar el otro.
+    const parsed = csvs.flatMap((csv) => {
+        try {
+            return [parseImportCsv(csv)];
+        } catch (error) {
+            if (error instanceof ImportFormatError) return [];
+            throw error;
+        }
+    });
+
+    const movies = dedupe(parsed.flatMap((p) => p.movies));
+    if (movies.length === 0) throw new ImportFormatError(NO_ROWS_MESSAGE.letterboxd);
+
+    return {
+        source: 'letterboxd',
+        movies,
+        skipped: parsed.reduce((sum, p) => sum + p.skipped, 0),
+    };
 }
 
 /** Lee el archivo elegido por el usuario: un CSV de cualquier plataforma o el .zip de Letterboxd. */
 export async function readImportFile(file: File): Promise<ParsedImport> {
     if (file.name.toLowerCase().endsWith('.zip')) {
-        const bytes = new Uint8Array(await file.arrayBuffer());
-        return parseImportCsv(extractLetterboxdRatings(bytes));
+        return parseLetterboxdZip(new Uint8Array(await file.arrayBuffer()));
     }
     return parseImportCsv(await file.text());
 }
