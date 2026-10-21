@@ -59,6 +59,13 @@ export default function TypewriterTitle({
   }, [sequences]);
 
   useEffect(() => {
+     
+    // Reiniciar el estado de escritura al iniciar el efecto
+    sequenceIndexRef.current = 0;
+    charIndexRef.current = 0;
+    isDeletingRef.current = false;
+    setDisplayText("");
+
     const getTypingDelay = () => {
       if (!naturalVariance) {
         return typingSpeed;
