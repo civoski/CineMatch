@@ -179,18 +179,7 @@ export default function TypewriterTitle({
           <span className="inline-block min-h-[1.2em] min-w-[0.5em]">
             {displayText}
           </span>
-          <motion.span
-            animate={{
-              opacity: [1, 1, 0, 0],
-            }}
-            className="inline-block h-[1em] w-[3px] bg-black dark:bg-white"
-            transition={{
-              duration: 1,
-              repeat: Number.POSITIVE_INFINITY,
-              repeatType: "loop",
-              ease: "linear",
-            }}
-          />
+          
         </motion.div>
       </div>
     </div>
