@@ -20,11 +20,11 @@ export function CinematchTypewriter({ className }: CinematchTypewriterProps) {
         aria-level={1}
       >
         <TypewriterTitle
-          sequences={[{ text: "CINEMATCH", deleteAfter: true }]}
+          sequences={[{ text: "CINEMATCH", deleteAfter: false }]}
           typingSpeed={80}
           deleteSpeed={40}
           pauseBeforeDelete={3000}
-          autoLoop={true}
+          autoLoop={false}
           naturalVariance={true}
         />
       </div>
