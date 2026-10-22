@@ -14,7 +14,7 @@ export function CinematchTypewriter({ className }: CinematchTypewriterProps) {
       <h1 className="sr-only">Cinematch - Descubra su cinefilia</h1>
 
       <div
-        className="relative"
+        className="relative w-full min-w-max"
         aria-label="Cinematch"
         role="heading"
         aria-level={1}
