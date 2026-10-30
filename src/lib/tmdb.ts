@@ -1,3 +1,5 @@
+import { pickBestMatch, type SearchCandidate } from './tmdb/title-match';
+
 // Configuración y credenciales
 const TMDB_READ_TOKEN = process.env.TMDB_READ_TOKEN;
 const TMDB_API_KEY = process.env.TMDB_API_KEY;
@@ -311,6 +313,27 @@ export class TmdbClient {
             append_to_response: 'credits,videos,release_dates,images,keywords,recommendations',
             include_image_language: 'null' // Incluir imágenes sin idioma (textless)
         });
+    }
+
+    /**
+     * Identifica una película solo por título y año (exports de Letterboxd, que no
+     * traen IDs). Busca en inglés porque Letterboxd toma sus títulos de TMDB en inglés.
+     * Estrategias:
+     *   1. películas con algún estreno ese año (incluye festivales, como Letterboxd),
+     *   2. sin año, tolerando ±1 año sobre el estreno principal.
+     * @returns el TMDb ID, o null si ningún resultado es confiable.
+     */
+    async findMovieIdByTitle(title: string, year?: number): Promise<number | null> {
+        const base = { query: title, language: 'en-US', include_adult: 'false' };
+
+        if (year) {
+            const byYear = await this.fetch<{ results: SearchCandidate[] }>('/search/movie', { ...base, year: String(year) });
+            const match = pickBestMatch(byYear?.results ?? [], title, year, { yearConfirmed: true });
+            if (match) return match.id;
+        }
+
+        const res = await this.fetch<{ results: SearchCandidate[] }>('/search/movie', base);
+        return pickBestMatch(res?.results ?? [], title, year)?.id ?? null;
     }
 
     /**

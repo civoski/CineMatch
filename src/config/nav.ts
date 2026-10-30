@@ -48,7 +48,7 @@ export const APP_NAV_ITEMS: NavItem[] = [
   },
   {
     label: "Mi Lista",
-    mobileLabel: "Libreria",
+    mobileLabel: "Mi Lista",
     href: SECONDARY_ROUTES.LIBRARY,
     icon: Library,
   },
