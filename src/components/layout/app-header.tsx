@@ -66,7 +66,7 @@ export function AppHeader({ variant = "default" }: AppHeaderProps) {
     )}>
       <div className="mx-auto flex h-14 w-full max-w-7xl items-center px-4 sm:px-6 lg:px-8">
         {/* SECCIÓN IZQUIERDA: Logo */}
-        <div className="flex flex-1 items-center justify-start">
+        <div className="hidden flex-1 items-center justify-start">
           <Link
             href={APP_ROUTES.HOME}
             className={cn(
@@ -83,7 +83,7 @@ export function AppHeader({ variant = "default" }: AppHeaderProps) {
         </div>
 
         {/* SECCIÓN CENTRAL: Navegación (Solo Desktop) */}
-        <div className="hidden md:flex items-center justify-center">
+        <div className="absolute left-1/2 -translate-x-1/2 hidden md:flex items-center justify-center">
           <AppNav variant={variant} />
         </div>
 

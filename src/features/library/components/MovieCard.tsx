@@ -78,7 +78,7 @@ export function MovieCard({ item }: MovieCardProps) {
                   </Badge>
                 ))}
             </div>
-
+            {/*
             <div className="mt-auto pt-3">
               <div
                 onClick={(e) => {
@@ -95,11 +95,12 @@ export function MovieCard({ item }: MovieCardProps) {
                     size="sm"
                     className="w-full"
                   >
-                    Cualificar
+                    Etiquetar
                   </Button>
                 </QualificationModal>
               </div>
             </div>
+            */}
           </div>
         </div>
       </Card>
