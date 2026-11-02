@@ -163,12 +163,10 @@ export function QualificationSelector({ movieId, categories, onComplete, onStepC
               />
               <span
                 className={cn(
-                  "text-[10px] font-semibold uppercase tracking-wider truncate transition-colors duration-300",
-                  isCurrent ? c.label : isDone ? "text-muted-foreground/70" : "text-muted-foreground/30"
+                 "text-[10px] font-semibold uppercase tracking-wider truncate transition-colors duration-300",
+                 isCurrent ? c.label : isDone ? "text-muted-foreground/70" : "text-muted-foreground/30"
                 )}
-              >
-                {cat.name}
-              </span>
+              ></span>
             </div>
           );
         })}
@@ -232,7 +230,11 @@ export function QualificationSelector({ movieId, categories, onComplete, onStepC
                           <Check className="h-3.5 w-3.5 shrink-0" />
                         </motion.span>
                       )}
-                      <span className="leading-tight select-none">{quality.name}</span>
+                      <span className="leading-tight select-none">
+                        {quality.name === "Fotografía y dirección de arte"
+                          ? "Fotografía"
+                          : quality.name}
+                      </span>
                     </motion.button>
                   );
                 })}

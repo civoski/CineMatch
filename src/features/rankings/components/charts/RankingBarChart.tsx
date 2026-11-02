@@ -95,7 +95,8 @@ export function RankingBarChart({ data, selectedIndex, onSelectItem }: RankingBa
             dataKey="name"
             tickLine={false}
             axisLine={false}
-            width={80}
+            width={120}
+            interval={0}
             tick={{ fontSize: 11, fill: 'currentColor' }}
           />
           <ChartTooltip

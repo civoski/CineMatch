@@ -102,7 +102,7 @@ export function MovieMobileDetail({ movie }: MovieMobileDetailProps) {
                   size="sm"
                   className="bg-accent hover:bg-accent/90 text-accent-foreground font-semibold shadow-md hover:shadow-lg transition-all"
                 >
-                  Cualificar
+                  Etiquetar
                 </Button>
               </QualificationModal>
             </div>

@@ -28,7 +28,7 @@ export const APP_NAV_ITEMS: NavItem[] = [
     icon: Home,
   },
   {
-    label: "Subir",
+    label: "Importar",
     mobileLabel: "Subir",
     href: APP_ROUTES.UPLOAD,
     icon: Upload,
