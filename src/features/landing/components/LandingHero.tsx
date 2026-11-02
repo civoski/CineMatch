@@ -32,12 +32,12 @@ export function LandingHero() {
 
         <div className="mt-2">
           <span className="inline-flex items-center rounded-full border border-primary/20 bg-primary/5 px-6 py-2 text-xs font-semibold uppercase tracking-widest text-primary shadow-sm backdrop-blur-md dark:border-white/20 dark:bg-white/10 dark:text-foreground/90 sm:text-sm">
-            Importe su lista de IMDb y descubra su cinefilia
+            Trae tu lista de IMDb, TMDb o Letterboxd y descubre tu cinefilia.
           </span>
         </div>
 
         <p className="mt-6 max-w-2xl text-pretty text-base leading-relaxed text-muted-foreground sm:text-lg md:text-xl">
-          Revele conexiones y explore sus listas a través de una interfaz visual e intuitiva que transformará la forma en que descubre y analiza películas.
+          Genera ránkigs de tus cineastas favoritos en base a tus calificaciones.
         </p>
 
           
