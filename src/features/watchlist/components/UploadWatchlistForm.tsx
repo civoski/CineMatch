@@ -240,7 +240,7 @@ export function UploadWatchlistForm({
         <StepItem
           icon={<Upload />}
           title="Paso 2: Subir"
-          desc="Arrastra el archivo para analizar géneros y años."
+          desc="Arrastra el archivo para analizar Directores, Actores, Guionistas, Fotografía, Música, Géneros y Años."
         />
         <StepItem
           icon={<BarChart3 />}
