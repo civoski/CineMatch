@@ -33,8 +33,8 @@ export default function UploadPage() {
   return (
     <Container className="py-6 space-y-8">
       <PageHeader
-        title="Subida de Watchlist"
-        description="Importá tu lista de IMDb, TMDB o Letterboxd para enriquecer datos y empezar el análisis."
+        title="Importa tu lista para enriquecer datos y empezar análisis"
+        
       />
 
       <Section>
