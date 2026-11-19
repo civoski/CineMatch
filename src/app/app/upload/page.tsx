@@ -33,9 +33,9 @@ export default function UploadPage() {
   return (
     <Container className="py-6 space-y-8">
       <PageHeader
-        title="Importa tu lista para enriquecer datos y empezar análisis"
-        
-      />
+        title="Importa tu lista para enriquecer datos y empezar el análisis."
+        className="text-center [&_h1]:font-serif [&_h1]:text-2xl [&_h1]:tracking-wide"
+    />
 
       <Section>
         <UploadWatchlistForm onUpload={handleUpload} maxSizeMB={10} />
